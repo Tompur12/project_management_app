@@ -5,10 +5,11 @@ services:
     build: ./backend
     ports:
       - "8000:8000"
-    volumes:
-      - .:/backend
     env_file:
       - .env
+    command: bash -c "cd backend/app && alembic upgrade head && cd ../.. && uvicorn backend.app.app.main:app --host 0.0.0.0 --reload"
+    volumes:
+      - .:/backend
     depends_on:
       - database
 
