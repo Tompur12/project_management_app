@@ -1,4 +1,7 @@
-from ..database.db_conf import Base
+from ..database.db_conf import (
+    Base,
+    get_db,
+)
 from sqlalchemy import (
     Column,
     Integer,
@@ -15,3 +18,16 @@ class User(Base):
     password = Column(String)
     first_name = Column(String)
     last_name = Column(String)
+
+    @classmethod
+    async def create(cls, email, password, first_name, last_name):
+        user = cls(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
+        with get_db() as db:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
