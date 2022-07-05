@@ -6,3 +6,11 @@ class UserSchema(BaseModel):
     password: str
     first_name: str
     last_name: str
+
+
+class GetUserByIdSchema(BaseModel):
+    id: int
+
+
+class GetUserByEmailSchema(BaseModel):
+    email: str
