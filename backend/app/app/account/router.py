@@ -48,3 +48,6 @@ async def get_by_email(request: GetUserByEmailSchema, response: Response):
     except NotFound as e:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": str(e)}
+
+@account_router.put("/update", status_code=200)
+# TODO create "update" endpoint and "delete" endpoint
