@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Response, status
 from .schema import (
     UserSchema,
-    GetUserByIdSchema,
+    GetUserByIdAndDeleteUserSchema,
     GetUserByEmailSchema,
+    UpdateUserSchema,
 )
 from .models import User
 from ..core.exceptions import (
@@ -30,11 +31,21 @@ async def create(request: UserSchema, response: Response):
     )
 
 
+@account_router.post("/get/all", status_code=200)
+async def get_all(response: Response):
+    try:
+        users = await User.get()
+        return users
+    except NotFound as e:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": str(e)}
+
+
 @account_router.post("/get/id", status_code=200)
-async def get_by_id(request: GetUserByIdSchema, response: Response):
+async def get_by_id(request: GetUserByIdAndDeleteUserSchema, response: Response):
     try:
         user = await User.get(id=request.id)
-        return user
+        return user[0]
     except NotFound as e:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": str(e)}
@@ -44,10 +55,31 @@ async def get_by_id(request: GetUserByIdSchema, response: Response):
 async def get_by_email(request: GetUserByEmailSchema, response: Response):
     try:
         user = await User.get(email=request.email)
-        return user
+        return user[0]
     except NotFound as e:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": str(e)}
 
+
 @account_router.put("/update", status_code=200)
-# TODO create "update" endpoint and "delete" endpoint
+async def update(request: UpdateUserSchema, response: Response):
+    try:
+        await User.update(
+            id=request.id,
+            email=request.email,
+            password=request.password,
+            first_name=request.first_name,
+            last_name=request.last_name
+        )
+    except NotFound as e:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": str(e)}
+
+
+@account_router.delete("/delete", status_code=200)
+async def delete(request: GetUserByIdAndDeleteUserSchema, response: Response):
+    try:
+        await User.delete(request.id)
+    except NotFound as e:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": str(e)}

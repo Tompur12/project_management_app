@@ -9,6 +9,8 @@ from sqlalchemy import (
     String,
     Table,
     select,
+    update,
+    delete,
 )
 from ..core.exceptions import (
     MissingArguments,
@@ -34,14 +36,19 @@ class User(Base):
             last_name=last_name
         )
         async with get_db() as db:
-            db.add(user)
+            await db.add(user)
             await db.commit()
             await db.refresh(user)
 
     @classmethod
     async def get(cls, id: Optional[int] = None, email: Optional[str] = None):
         if id is None and email is None:
-            raise MissingArguments("Missing arguments!")
+            async with get_db() as db:
+                response = await db.execute(select(cls))
+            response = response.mappings().all()
+            if not response:
+                raise NotFound("No users in database!")
+            return response
         else:
             if id is None:
                 async with get_db() as db:
@@ -49,11 +56,51 @@ class User(Base):
                 response = response.mappings().all()
                 if not response:
                     raise NotFound("User not found!")
-                return response[0]
+                return response
             else:
                 async with get_db() as db:
                     response = await db.execute(select(cls).filter(cls.id == id))
                 response = response.mappings().all()
                 if not response:
                     raise NotFound("User not found!")
-                return response[0]
+                return response
+
+    @classmethod
+    async def update(
+            cls,
+            id,
+            email: Optional[str],
+            password: Optional[str],
+            first_name: Optional[str],
+            last_name: Optional[str]
+    ):
+        try:
+            await cls.get(id=id)
+        except NotFound as e:
+            raise NotFound(str(e))
+        if email is None and password is None and first_name is None and last_name is None:
+            raise ValueError("You can't change it to None value!")
+        if email is not None:
+            async with get_db() as db:
+                await db.execute(update(cls).where(cls.id == id).values(email=email))
+        if password is not None:
+            async with get_db() as db:
+                await db.execute(update(cls).where(cls.id == id).values(password=password))
+        if first_name is not None:
+            async with get_db() as db:
+                await db.execute(update(cls).where(cls.id == id).values(first_name=first_name))
+                await db.commit()
+        if last_name is not None:
+            async with get_db() as db:
+                await db.execute(update(cls).where(cls.id == id).values(last_name=last_name))
+                await db.commit()
+
+    @classmethod
+    async def delete(cls, id):
+        try:
+            await cls.get(id=id)
+        except NotFound:
+            raise NotFound("Can't delete user which don't exist!")
+        async with get_db() as db:
+            await db.execute(delete(cls).where(cls.id == id))
+            await db.commit()
