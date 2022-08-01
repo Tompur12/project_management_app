@@ -45,7 +45,7 @@ class User(Base):
         if id is None and email is None:
             async with get_db() as db:
                 response = await db.execute(select(cls))
-            response = response.mappings().all()
+                response = response.mappings().all()
             if not response:
                 raise NotFound("No users in database!")
             return response
@@ -53,14 +53,14 @@ class User(Base):
             if id is None:
                 async with get_db() as db:
                     response = await db.execute(select(cls).filter(cls.email == email))
-                response = response.mappings().all()
+                    response = response.mappings().all()
                 if not response:
                     raise NotFound("User not found!")
                 return response
             else:
                 async with get_db() as db:
                     response = await db.execute(select(cls).filter(cls.id == id))
-                response = response.mappings().all()
+                    response = response.mappings().all()
                 if not response:
                     raise NotFound("User not found!")
                 return response
